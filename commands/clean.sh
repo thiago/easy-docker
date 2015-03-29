@@ -1,0 +1,97 @@
+#!/bin/bash
+
+clean_all=""
+clean_force=""
+clean_object=""
+clean_method=""
+
+function clean_docker {
+	docker $clean_method $clean_force $@
+}
+
+function clean_images {
+	if [ -n "${clean_all}" ]; then
+	    if confirm "This command will remove all images of the docker. Are you sure?"; then
+            list=$(docker images -aq)
+        fi
+	else
+		list=$(docker images | grep "^<none>" | awk '{print $3}')	
+	fi
+
+	if [ -n "${list}" ]; then
+	    notify "Removing images"
+		clean_docker $list
+	fi
+}
+
+function clean_ps {
+	if [ -n "${clean_all}" ]; then
+	    if confirm "This command will remove all containers of the docker. Are you sure?"; then
+		    list=$(docker ps -aq)
+        fi
+	else
+		list=$(docker ps -q)
+	fi
+
+	if [ -n "${list}" ]; then
+		clean_docker $list
+	fi
+}
+
+function clean_help {
+    echo -e "
+${color_blue}Usage${color_default}: $PROGRAM_NAME $CURRENT_CMD command [options]
+
+${color_black}Clean images or containers${color_default}
+
+${color_blue}Commands${color_default}:
+ i, images                      Clean images. The default only remove untagged images (with <none>)
+ p, s, ps, c, containers        Clean containers. The default only remove stop containers
+
+${color_blue}Options${color_default}:
+ -a, --all                      Clean all. The default remove only stop containers
+                                and untagged images (with <none>)
+
+ -f, --force                    Force remove
+ -h, --help                     This help screen
+"
+}
+
+function main_clean {
+    shift;
+	while [ "${1-}" != "" ]; do
+	    case $1 in
+	        "-h" | "--help")
+	            clean_help
+	            exit
+	            ;;
+	    	"-a" | "--all")
+	            clean_all="-a"
+	            ;;
+	    	"-f" | "--force")
+	            clean_force="-f"
+	            ;;
+	    	"i" | "images")
+				clean_object="images"
+				clean_method="rmi"
+	            ;;
+	    	"p" | "s" | "ps" | "c" | "containers")
+				clean_object="ps"
+				clean_method="rm"
+	            ;;
+	        *)
+				not_found $1
+	            clean_help
+	            exit
+	            ;;
+	    esac
+	    shift
+	done
+	if [ "${clean_object}" == "images" ]; then
+		clean_images
+	elif [ "${clean_object}" == "ps" ]; then 
+		clean_ps
+	else
+		clean_help
+	fi
+}
