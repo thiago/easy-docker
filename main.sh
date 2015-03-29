@@ -23,7 +23,12 @@ while [ -h "$SOURCE" ]; do
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 
-PROGRAM_NAME=$(basename $0)
+if [ -n "${EASY_DOCKER_ALIAS}" ]; then
+    PROGRAM_NAME=$EASY_DOCKER_ALIAS
+else
+    PROGRAM_NAME=$(basename $0)
+fi
+
 # Folders
 PROJECT_DIR=`echo "$( cd -P "$( dirname "$SOURCE" )" && pwd )"`
 CMDS_DIR=$PROJECT_DIR/commands
