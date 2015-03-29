@@ -41,14 +41,22 @@ interactive_opts=()
 
 # Print usage
 usage() {
-  echo -n "$(basename $0) [options] command [command options]
-Description of this script.
- Options:
-  -v, --verbose                  Print debug messages
-  -f, --force                    Skip user interaction
-  -q, --quiet                    Quiet (no output)
-  -h, --help                     Display this help and exit
-      --version                  Output version information and exit
+    echo -e "Easy Docker is a simple command line tools to use the docker on a day-to-day
+
+$(title Usage):
+ $PROGRAM_NAME [options] command [command options]
+
+$(title Options):
+ -v, --verbose                  Print debug messages
+ -f, --force                    Skip user interaction
+ -q, --quiet                    Quiet (no output)
+ -h, --help                     Display this help and exit
+     --version                  Output version information and exit
+
+$(title Commands):
+ ls                             List installed alias
+ clean                          Clean images or containers
+ install                        Pull a image and create alias
 "
 }
 
@@ -64,7 +72,8 @@ main() {
     CURRENT_CMD=${args[0]}
     main_${CURRENT_CMD} ${args[@]}
   else
-    err "Command \"${args[0]}\" not found!"
+    not_found ${args[0]}
+    exit 1
   fi
 }
 
@@ -170,7 +179,7 @@ while [[ $1 = -?* ]]; do
     -v|--verbose) set -x; verbose=1 ;;
     -q|--quiet) quiet=1 ;;
     --endopts) shift; break ;;
-    *) die "invalid option: $1" ;;
+    *) not_found $1; exit 1;;
   esac
   shift
 done

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 
 color_default='\033[0m'
@@ -10,6 +10,9 @@ color_blue='\033[34m'
 color_magenta='\033[35m'
 color_cyan='\033[36m'
 color_white='\033[37m'
+
+
+color_gray='\033[1;30m'
 
 function msg {
     color=${1}
@@ -23,6 +26,10 @@ function default {
 
 function black {
     msg $color_black $@
+}
+
+function gray {
+    msg $color_gray $@
 }
 
 function red {
@@ -51,4 +58,8 @@ function cyan {
 
 function white {
     msg $color_white $@
+}
+
+function title {
+    blue $@
 }

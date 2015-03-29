@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 install_force=0
 function install_help {
@@ -82,7 +82,8 @@ function main_install {
 		echo -e "- Image already installed. ${color_blue}Use \"-f\" flag to force install again${color_default}"
 	fi
 	echo "- Set alias \"$alias_image\""
-	echo -e "#!/bin/bash 
+	mkdir -p $BIN_DIR
+	echo -e "#!/usr/bin/env bash
 
 # META: $alias_image $image
 $PROJECT_DIR/main.sh run_image $alias_image $image \$@
