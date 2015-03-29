@@ -8,7 +8,7 @@ By default Docker Easy is installed with alias `d`, but you can specify it durin
 
 ### Install using curl:
 
-    source <(curl -e https://raw.githubusercontent.com/trsouz/easy-docker/master/install_remote.sh)
+    source <(curl -s https://raw.githubusercontent.com/trsouz/easy-docker/master/install_remote.sh)
 
 ### Install using wget:
 
