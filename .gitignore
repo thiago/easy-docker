@@ -1,3 +1,4 @@
 # Created by .gitignore support plugin (hsz.mobi)
 
+bin
 atlassian-ide-plugin.xml
