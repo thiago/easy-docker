@@ -1,6 +1,6 @@
 # Easy Docker
 
-[Easy Docker](https://github.com/trsouz/easy-docker) is a simple command line tools to use the [docker](https://www.docker.com) on day-to-day writen in [bash](http://en.wikipedia.org/wiki/Bash_\(Unix_shell\)).
+[Easy Docker](https://github.com/trsouz/easy-docker) is a simple command line tools to use the [docker](https://www.docker.com) on day-by-day writen in [bash](http://en.wikipedia.org/wiki/Bash_\(Unix_shell\)).
 
 ## Installation
 
@@ -21,7 +21,7 @@ By default Docker Easy is installed with alias `d`, but you can specify it durin
 
 ## Usage
 
-     d [options] command [command options]
+    d [options] command [command options]
 
     Options:
      -v, --verbose                  Print debug messages
