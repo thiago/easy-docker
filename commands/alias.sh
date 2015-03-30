@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
 install_force=0
-function install_help {
+function alias_help {
     echo -e "
-${color_blue}Usage${color_default}: $PROGRAM_NAME $CURRENT_CMD alias-name[:version] [image[:version]]
+$(title Usage$): $PROGRAM_NAME $CURRENT_CMD alias-name[:version] [image[:version]]
 
-${color_black}Create a alias and pull image to easy run with docker.
-If you do not specify an image, then it will use a default image if available.${color_default}
+Create a alias and pull image to easy run with docker.
+If you do not specify an image, then it will use a default image if available.
 
-${color_blue}Options${color_default}:
+$(title Options):
  -f, --force                    Force pull if image exist locally
  -h, --help                     This help screen
 
-${color_black}Ex.: $PROGRAM_NAME $CURRENT_CMD python
-Ex.: $PROGRAM_NAME $CURRENT_CMD python:2.7.9 google/python${color_default}
+Ex.: $PROGRAM_NAME $CURRENT_CMD python
+Ex.: $PROGRAM_NAME $CURRENT_CMD python:2.7.9 google/python
 "
 }
 
@@ -29,7 +29,7 @@ function install_tag_image {
 	docker tag $@
 }
 
-function main_install {
+function main_alias {
     shift
 
 	local alias_name=""
@@ -39,18 +39,20 @@ function main_install {
 	local image_version=""
 	local image=""
 
+    # Find options on args
 	for opt in $@; do
 	    if [ "${opt}" == "-h" -o "${opt}" == "--help" ]; then
-            install_help
+            alias_help
             exit
         elif [ "${opt}" == "-f" -o "${opt}" == "--force" ]; then
         	shift
         	install_force=1
 	    fi
 	done
-	
+
+	# If not command
 	if [ -z "${1-}" ]; then
-		install_help
+		alias_help
         exit
     else
     	local alias_name=$(get_image_name $1)
