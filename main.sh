@@ -33,8 +33,11 @@ fi
 PROJECT_DIR=`echo "$( cd -P "$( dirname "$SOURCE" )" && pwd )"`
 CMDS_DIR=$PROJECT_DIR/commands
 UTILS_DIR=$PROJECT_DIR/utils
+TMP_DIR=$PROJECT_DIR/tmp
 BIN_DIR=$PROJECT_DIR/bin
+PERSISTENT_DIR=$PROJECT_DIR/persistent
 
+mkdir -p $TMP_DIR $BIN_DIR
 version="v0.1"
 
 # Include utils helpers
@@ -46,22 +49,23 @@ interactive_opts=()
 
 # Print usage
 usage() {
-    echo -e "Easy Docker is a simple command line tools to use the docker on a day-to-day
+
+    echo -e "Easy Docker is a simple command line tools to use the docker on a day-by-day
 
 $(title Usage):
  $PROGRAM_NAME [options] command [command options]
 
 $(title Options):
- -v, --verbose                  Print debug messages
  -f, --force                    Skip user interaction
- -q, --quiet                    Quiet (no output)
  -h, --help                     Display this help and exit
-     --version                  Output version information and exit
+ -q, --quiet                    Quiet (no output)
+ -v, --verbose                  Print debug messages
+ -V, --version                  Output version information and exit
 
 $(title Commands):
  ls                             List installed alias
- clean                          Clean images or containers
- install                        Pull a image and create alias
+ clean                          Cleanup images or containers
+ alias                          Pull a image and create alias
 "
 }
 
@@ -178,11 +182,11 @@ safe_exit() {
 # Read the options and set stuff
 while [[ $1 = -?* ]]; do
   case $1 in
+    -f|--force) force=1 ;;
     -h|--help) usage >&2; safe_exit ;;
-    --version) out "$(basename $0) $version"; safe_exit ;;
-    -v|--force) force=1 ;;
-    -v|--verbose) set -x; verbose=1 ;;
     -q|--quiet) quiet=1 ;;
+    -v|--verbose) set -x; verbose=1 ;;
+    -V|--version) out "$PROGRAM_NAME $version"; safe_exit ;;
     --endopts) shift; break ;;
     *) not_found $1; exit 1;;
   esac
