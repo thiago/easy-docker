@@ -56,7 +56,7 @@ function parse_yaml {
 }
 
 function not_found {
-    echo ""
+    ([ -n $1 ]) && return
     case $1 in
         -*)
             err "Option \"$1\" not found"
@@ -70,12 +70,20 @@ function not_found {
 
 function get_image_name {
     local list=(${1//:/ })
-    echo "${list[0]-}"
+    if [ "$(echo $1 | head -c 1)" == ":" ]; then
+        return
+    else
+        echo "${list[0]-}"
+    fi
 }
 
 function get_image_version {
     local list=(${1//:/ })
-    echo "${list[1]-}"
+    if [ "$(echo $1 | head -c 1)" == ":" ]; then
+        echo "${list[0]:=latest}"
+    else
+        echo "${list[1]:=latest}"
+    fi
 }
 
 function find_default_image {
