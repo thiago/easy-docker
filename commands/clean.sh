@@ -25,14 +25,7 @@ function clean_images {
 }
 
 function clean_ps {
-	if [ -n "${clean_all}" ]; then
-	    if confirm "This command will remove all containers of the docker. Are you sure?"; then
-		    list=$(docker ps -aq)
-        fi
-	else
-		list=$(docker ps -q)
-	fi
-
+    list=$(docker ps -aq)
 	if [ -n "${list}" ]; then
 		clean_docker $list
 	fi
