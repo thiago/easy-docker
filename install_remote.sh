@@ -14,9 +14,8 @@ else
     echo "You need curl or wget installed to continue"
     exit 1
 fi
-
 mkdir -p $HOME/.easydocker
-cp -rpu easy-docker-master/* $HOME/.easydocker/
+cp -rp easy-docker-master/* $HOME/.easydocker/
 rm -rf easy-docker-master
 . $HOME/.easydocker/install.sh
 
