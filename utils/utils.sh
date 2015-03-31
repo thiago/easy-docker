@@ -2,7 +2,6 @@
 
 . $UTILS_DIR/colors.sh
 
-# Helpers {{{
 
 function out {
   ((quiet)) && return
@@ -39,6 +38,10 @@ function confirm {
   [[ $REPLY =~ ^[Yy]$ ]];
 }
 
+function require_root {
+    [[ $UID -ne 0 ]] && die "You need to be root to run this script"
+}
+
 function parse_yaml {
    local prefix=$2
    local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
@@ -56,7 +59,7 @@ function parse_yaml {
 }
 
 function not_found {
-    ([ -n $1 ]) && return
+    ([ -z $1 ]) && return
     case $1 in
         -*)
             err "Option \"$1\" not found"

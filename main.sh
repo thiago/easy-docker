@@ -63,7 +63,7 @@ $(title Options):
  -V, --version                  Output version information and exit
 
 $(title Commands):
- ls                             List installed alias
+ ls                             Show all installed alias
  clean                          Cleanup images or containers
  alias                          Pull a image and create alias
 "
@@ -196,12 +196,6 @@ done
 # Store the remaining part as arguments.
 args+=("$@")
 
-# }}}
-# Run it {{{
-
-# Uncomment this line if the script requires root privileges.
-# [[ $UID -ne 0 ]] && die "You need to be root to run this script"
-
 if ((interactive)); then
   prompt_options
 fi
@@ -211,5 +205,3 @@ main
 
 # This has to be run last not to rollback changes we've made.
 safe_exit
-
-# }}}
