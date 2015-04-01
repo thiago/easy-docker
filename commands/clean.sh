@@ -33,15 +33,13 @@ function clean_ps {
 
 function clean_help {
     echo -e "
-${color_blue}Usage${color_default}: $PROGRAM_NAME $CURRENT_CMD command [options]
+$(title Usage): $PROGRAM_NAME $CURRENT_CMD command [options]
 
-${color_black}Clean images or containers${color_default}
-
-${color_blue}Commands${color_default}:
+$(title Commands):
  i, images                      Clean images. The default only remove untagged images (with <none>)
  p, s, ps, c, containers        Clean containers. The default only remove stop containers
 
-${color_blue}Options${color_default}:
+$(title Options):
  -a, --all                      Clean all. The default remove only stop containers
                                 and untagged images (with <none>)
 

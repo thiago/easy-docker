@@ -63,9 +63,8 @@ $(title Options):
  -V, --version                  Output version information and exit
 
 $(title Commands):
- ls                             Show all installed alias
  clean                          Cleanup images or containers
- alias                          Pull a image and create alias
+ run                            Run a platform in a new container and remove after exit
 "
 }
 
