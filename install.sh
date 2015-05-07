@@ -45,7 +45,7 @@ $SETTINGS
 
 " >> $CONFIG
 else
-    sed -i.old "s|EASY_DOCKER_DIR=.*$|${SETTINGS}|g" $CONFIG
+    sed -i.old "s|export EASY_DOCKER_DIR=.*$|${SETTINGS}|g" $CONFIG
 fi
 
 echo "EasyDocker was successfully installed. Type \"$EASY_DOCKER_ALIAS\" to see the help.
