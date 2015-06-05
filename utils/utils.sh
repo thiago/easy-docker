@@ -72,20 +72,28 @@ function not_found {
 }
 
 function get_image_name {
-    local list=(${1//:/ })
+    local list=${1//:*/}
+    local list=${list//*\//}
     if [ "$(echo $1 | head -c 1)" == ":" ]; then
         return
     else
-        echo "${list[0]-}"
+        echo "${list}"
+    fi
+}
+
+function get_image_repository {
+    local list=${1//\/*/}
+    if [[ $1 != ${list} ]]; then
+        echo ${list}
     fi
 }
 
 function get_image_version {
-    local list=(${1//:/ })
-    if [ "$(echo $1 | head -c 1)" == ":" ]; then
-        echo "${list[0]:=latest}"
+    local list=${1//*:/}
+    if [[ $1 != ${list} ]]; then
+        echo ${list}
     else
-        echo "${list[1]:=latest}"
+        echo "latest"
     fi
 }
 

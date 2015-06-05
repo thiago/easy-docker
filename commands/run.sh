@@ -9,6 +9,7 @@ $(title Usage):
 
 $(title Options):
  -h, --help                     Display this help and exit
+ -f, --file FILE                Specify an alternate compose file
  -i, --interactive=false        Enter in container with shell
  -e KEY=VALUE                   Set an environment variable (can be used multiple times)
  --entrypoint=/bin/bash         Change the entrypoint
@@ -33,17 +34,18 @@ function upsearch {
 
 function main_run {
     shift
-    local interactive=""
-    local custom_entrypoint=""
-    local envs=()
+    local IFS=$'\n'
+    local docker_env_opt=""
+    local docker_args=()
+    local docker_custom_args=()
+    local docker_flag=""
+    local docker_opt=""
+    local docker_value=""
+
     while [[ $1 = -?* ]]; do
       case $1 in
-        -h|--help) usage_run >&2; safe_exit;;
-        -i|--interactive) interactive=1;;
-        -f|--file) shift; file=$1;;
-        -e) shift; envs+=("-e $1") ;;
-        --entrypoint) shift; custom_entrypoint=$1 ;;
-        *) not_found $1; exit 1;;
+        -d | -i | -P | -t) docker_custom_args+=("$1") ;;
+        *) docker_custom_args+=("$1 $2"); shift ;;
       esac
       shift
     done
@@ -52,54 +54,125 @@ function main_run {
         usage_run
         exit 1
     fi
+
     local args_length=$(($#))
     local args_array=${@:2:args_length}
-    local name=$(get_image_name $1)
-    local version=$(get_image_version $1)
+    local image_repository=$(get_image_repository $1)
+    local image_name=$(get_image_name $1)
+    local image_version=$(get_image_version $1)
     if [ "$(echo $2 | head -c 1)" == ":" ]; then
-        local version=$(get_image_version $2)
+        local image_version=$(get_image_version $2)
         local args_array=${@:3:args_length}
     fi
-    version_strip=${version//./""}
-    version_strip=${version_strip//-/""}
 
-    TMPL_FILE="${file:=$PROJECT_DIR/schema/base.yml}"
-    TMPL_ENV_COMMON="$PROJECT_DIR/schema/base.env"
-    TMPL_ENV_PLATFORM="$PROJECT_DIR/schema/$name.env"
+    local image_version_strip=${image_version//./}
+    image_version_strip=${image_version_strip//-/}
+    image_repository=${image_repository:=_}
+    local ENVS=(
+        "$PROJECT_DIR/schema/_.sh"
+        "$PROJECT_DIR/schema/base.sh"
+        "$PROJECT_DIR/schema/${image_name}.sh"
+        "$PROJECT_DIR/schema/${image_repository}/${image_name}.sh"
+        "$PROJECT_DIR/schema/${image_repository}/${image_name}/${image_version}.sh"
+    )
 
-    if [ -f "${TMPL_ENV_COMMON}" ]; then
-        eval $(cat $TMPL_ENV_COMMON)
-    fi
-
-    if [ "${interactive}" == 1 ] || [ "${custom_entrypoint}" != "" ]; then
-        custom_entry="${name}_entrypoint=\"${custom_entrypoint:=${entrypoint:="/bin/bash -c"}}\""
-        eval "$custom_entry"
-    fi
-
-    if [ -f "${TMPL_ENV_PLATFORM}" ]; then
-        eval $(cat $TMPL_ENV_PLATFORM)
-    fi
-
-    if [ "${#args_array}" != 0 ]; then
-        if [ "$entrypoint" == "/bin/bash" ] || [ "$entrypoint" == "/bin/sh" ]; then
-            echo -e "#!$entrypoint \n${args_array[@]}" > $TMP_DIR/entrypoint.sh
-            chmod +x $TMP_DIR/entrypoint.sh
-            entrypoint=$TMP_DIR/entrypoint.sh
-            volumes+=("$TMP_DIR/entrypoint.sh:$TMP_DIR/entrypoint.sh")
-            args_array=""
+    for env in ${ENVS[@]}; do
+        if [ -f "${env}" ]; then
+            . $env
         fi
-    fi
+    done
 
+    # parse default help of docker cli
+    local docker_help=(`docker run --help | grep -e --`)
+    for (( i = 0; i < ${#docker_help[@]}; i++ )); do
+        # get flag like -v -c -P
+        docker_flag=`echo "${docker_help[$i]}" | awk -F', ' '{print $1}' | awk -F'-' '{print $2}'`
+        # get option like --volume --cpu-shares --publish-all
+        docker_opt=`echo "${docker_help[$i]}" | awk -F'=' '{print $1}' | awk -F'--' '{print $2}'`
+        # get default value like [] 0 false
+        docker_value=`echo "${docker_help[$i]}" | awk -F'=' '{print $2}' | awk '{print $1}'`
+        # replace - to _ like cpu-shares to cpu_shares
+        docker_env_opt=${docker_opt//-/_}
 
-    if [ -f "${TMPL_FILE}" ]; then
-        TMPL_TMP="TMPL_CURRENT=\"`echo -e "$(cat $TMPL_FILE)"`\""
-        eval "$TMPL_TMP"
-        echo -e "$TMPL_CURRENT" > $TMP_DIR/${name}_with_tab.yml
-        expand -t 2 $TMP_DIR/${name}_with_tab.yml > $TMP_DIR/$name.yml
+        # if exist value in option
+        if [ -n ${!docker_opt} ]; then
+            # parse default values by type to apply different ways to parse and insert arguments
+            # if is a array then add in loop
+            if is_array ${docker_env_opt}; then
+                for item in $(eval "echo \"\${"${docker_env_opt}"[*]}\""); do
+                    docker_args+=( "--$docker_opt $item" )
+                done
+            # if is a boolean
+            elif [[ ${docker_value} = "false" ]] || [[ ${docker_value} = "true" ]]; then
+                # and current value is not equal a default value
+                if [[ ${!docker_env_opt} != ${docker_value} ]]; then
+                    # then add in args
+                    docker_args+=( "--$docker_opt" )
+                fi
+            # if is a string
+            elif [[ ${docker_value} == \"* ]]; then
+                # and current value is not equal a default value
+                if [[ "\"${!docker_env_opt}\"" != ${docker_value} ]]; then
+                    # then add in args
+                    docker_args+=( "--$docker_opt ${!docker_env_opt}" )
+                fi
+            # if is a number
+            elif [[ "${docker_value}" != "${!docker_env_opt}" ]]; then
+                docker_args+=( "--$docker_opt ${!docker_env_opt}" )
+            fi
+        fi
+    done
+
+    # if repository of image is not a default library (_)
+    if [[ "${image_repository}" != "_" ]]; then
+        # then increment with /
+        image_repository="${image_repository}/"
     else
-        err "File \"${TMPL_FILE}\" not found"
-        exit 1
+        # then clean variable
+        image_repository=""
     fi
 
-    docker-compose -f $TMP_DIR/$name.yml run $envs --service-ports --rm $name$version_strip ${args_array[@]}
+    # join command line options into default args
+    docker_args+=( "${docker_custom_args[*]}" )
+
+    local cmd=`echo docker run ${docker_args[*]} ${image_repository}${image_name}:${image_version} ${args_array[*]}`
+
+    eval $cmd
+}
+
+function dockerSwarm(){
+    local name=$1
+    local token=$(docker run swarm create 2>&1 | tail -1)
+    docker-machine create -d virtualbox --swarm --swarm-master --swarm-discovery token://$token $name
+    docker-machine create -d virtualbox --swarm --swarm-discovery token://$token ${name}1
+    docker-machine create -d virtualbox --swarm --swarm-discovery token://$token ${name}2
+    docker-machine create -d virtualbox --swarm --swarm-discovery token://$token ${name}3
+
+    echo $token
+}
+
+function runOptsToEnv(){
+    local IFS=$'\n'
+    local docker_help=(`docker run --help | grep -e --`)
+    local docker_opts=()
+    local docker_env_opt=""
+    local docker_args=()
+    local docker_flag=""
+    local docker_opt=""
+    local docker_value=""
+
+    for (( i = 0; i < ${#docker_help[@]}; i++ )); do
+        docker_flag=`echo "${docker_help[$i]}" | awk -F', ' '{print $1}' | awk -F'-' '{print $2}'`
+        docker_opt=`echo "${docker_help[$i]}" | awk -F'=' '{print $1}' | awk -F'--' '{print $2}'`
+        docker_value=`echo "${docker_help[$i]}" | awk -F'=' '{print $2}' | awk '{print $1}'`
+        docker_env_opt=${docker_opt//-/_}
+        docker_opts+=(${docker_env_opt}=${docker_value//[]/()})
+    done
+
+    echo "${docker_opts[*]}"
+}
+
+function is_array() {
+  local variable_name=$1
+  [[ "$(declare -p $variable_name)" =~ "declare -a" ]]
 }
