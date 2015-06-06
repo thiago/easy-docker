@@ -76,9 +76,9 @@ function main_run {
         "$PROJECT_DIR/schema/${image_repository}/${image_name}/${image_version}.sh"
     )
 
-    for env in ${ENVS[@]}; do
-        if [ -f "${env}" ]; then
-            . $env
+    for current_env in ${ENVS[@]}; do
+        if [ -f "${current_env}" ]; then
+            . $current_env
         fi
     done
 
